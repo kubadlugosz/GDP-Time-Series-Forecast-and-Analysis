@@ -1,0 +1,98 @@
+---
+title: "IDS476/ECON450"
+author: "Jakub Dlugosz"
+date: "April 22, 2018"
+output: html_document
+---
+
+```{r setup, echo=T, eval=T}
+#Econ 450: "GDP Forecasting Project"
+library(ggplot2)
+library(timeSeries)
+library(forecast)
+setwd("C:/STAT 382/Econ450 Project")
+mydata<-read.csv("Dataset.csv")
+timeseries<-ts(mydata,frequency = 1,start = 1981,end = 2016)
+GDP1<-mydata[,c(1,2)]
+CPI_1<-mydata[,3]
+GDP<-mydata[,2]
+CPI<-mydata[,3]
+Unemployment<-mydata[,4]
+summary(timeseries)
+
+
+```
+
+```{r time_series_graphs, echo=T, eval=T}
+#Line plot of for real gdp
+ggplot(mydata,aes(x=mydata$Date,y=mydata$Real.GDP))+labs(x="Time",y="GDP")+geom_line(colour='red')+ggtitle("Real GDP Growth Rates")
+#line plot of CPI
+ggplot(mydata,aes(x=mydata$Date,y=mydata$CPI,color='blue'))+labs(x="Time",y="CPI")+geom_line(colour='blue')+ggtitle("CPI Growth Rates")
+#line plot of Unemployment
+ggplot(mydata,aes(x=mydata$Date,y=mydata$Unemployment.Rate))+labs(x="Time",y="Unemployment")+geom_line(colour='green')+ggtitle("Unemployment Growth Rates")
+
+#Line plot of all three combined
+ggplot(mydata,aes(x=mydata$Date))+geom_line(aes(y=mydata$Real.GDP,colour='red'))+geom_line(aes(y=mydata$CPI,colour='blue'))+geom_line(aes(y=mydata$Unemployment.Rate,colour='green'))+labs(x="Time",y="GDP and CPI")+ggtitle("Economic Growth Rates")+ scale_color_manual(labels = c("Real GDP", "CPI",'Unemployment Rate'), values = c("red", "blue","green"))
+
+
+```
+
+```{r forecasts, echo=T , eval=T}
+#GDP Time Series quarerly data
+GDP_timeseries<-ts(GDP,frequency = 4,start = 1981, end =2016)
+
+plot.ts(GDP_timeseries)
+#Holt winters 
+gdp_forecast<-HoltWinters(GDP_timeseries,gamma = 0,beta = 0)
+gdp_forecast
+plot(gdp_forecast)
+#Forecast for the next 5 years
+gdp_forecast2<-forecast(gdp_forecast,h=5)
+gdp_forecast2
+plot(gdp_forecast2, xlab="Time",ylab="GDP Growth Rates",main="GDP Forecast Quarterly Data")
+acf(GDP_timeseries)
+pacf(GDP_timeseries)
+auto.arima(GDP_timeseries)
+
+
+##Annual 
+GDP_timeseries1<-ts(GDP,frequency = 1,start = 1981, end =2016)
+
+acf(GDP_timeseries1)
+pacf(GDP_timeseries1)
+auto.arima(GDP_timeseries1)
+#GGPLOT of the time series
+ggplot(mydata,aes(x=mydata$Date,y=mydata$Real.GDP))+labs(x="Time",y="GDP")+geom_line(colour='red')+ggtitle("Real GDP Growth Rates")
+#GGPLOT with a smooth line
+ggplot(mydata,aes(x=mydata$Date,y=mydata$Real.GDP))+labs(x="Time",y="GDP")+geom_line(colour='red')+ggtitle("Real GDP Growth Rates")+geom_smooth(method = "loess")
+ggplot(mydata,aes(x=mydata$Date,y=mydata$Real.GDP))+labs(x="Time",y="GDP")+geom_line(colour='red')+ggtitle("Real GDP Growth Rates Annual Data")+geom_forecast(h=5)
+
+
+ts.plot(gdp_forecast2$residuals)
+
+ Box.test(gdp_forecast2$residuals, type="Ljung-Box")
+
+
+```
+
+
+
+
+```{r timeseries regressions,eval=T,echo=T}
+reg1<-lm(GDP~CPI)
+reg2<-lm(GDP~Unemployment)
+reg3<-lm(GDP~CPI+Unemployment)
+
+GDP_lag<-lag(GDP,k=1)
+reg4<-lm(GDP~GDP_lag)
+
+summary(reg1)
+summary(reg2)
+summary(reg3)
+summary(reg4)
+
+
+```
+
+
+
